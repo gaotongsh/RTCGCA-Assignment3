@@ -1,10 +1,10 @@
 
-/* An example of the minimal Win32 & OpenGL program.  It only works in
+/* An example of the minimal Win32 & OpenGL program. It only works in
    16 bit color modes or higher (since it doesn't create a
    palette). */
 
 
-#include <windows.h>			/* must include this before GL/gl.h */
+#include <windows.h>		/* must include this before GL/gl.h */
 #include <GL/gl.h>			/* OpenGL header file */
 #include <GL/glu.h>			/* OpenGL utilities header file */
 #include <stdio.h>
@@ -16,12 +16,12 @@ display()
     /* rotate a triangle around */
     glClear(GL_COLOR_BUFFER_BIT);
     glBegin(GL_TRIANGLES);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex2i(0,  1);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex2i(-1, -1);
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex2i(1, -1);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glVertex2i(0,  1);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        glVertex2i(-1, -1);
+        glColor3f(0.0f, 0.0f, 1.0f);
+        glVertex2i(1, -1);
     glEnd();
     glFlush();
 }
@@ -144,7 +144,7 @@ WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst,
 
     hWnd = CreateOpenGLWindow("minimal", 0, 0, 256, 256, PFD_TYPE_RGBA, 0);
     if (hWnd == NULL)
-	exit(1);
+	    exit(1);
 
     hDC = GetDC(hWnd);
     hRC = wglCreateContext(hDC);
