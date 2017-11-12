@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="minimal.c">
+    <ClCompile Include="Rendering_in_FullScreen_withOpenGL.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
