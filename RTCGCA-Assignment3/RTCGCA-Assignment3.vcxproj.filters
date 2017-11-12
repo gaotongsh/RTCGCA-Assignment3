@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Rendering_in_FullScreen_withOpenGL.cpp">
+    <ClCompile Include="assignment3.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
