@@ -170,7 +170,7 @@ void IdleFunction(void)
 
         sprintf_s(numStr, 10, "%04d", frameNum);
         numStr[4] = '\0';
-        sprintf_s(bmpFilename, 100, "%s%s%s.bmp", szBuffer, "frame", numStr);
+        sprintf_s(bmpFilename, MAX_PATH, "%s%s%s.bmp", szBuffer, "/frame", numStr);
         SaveDIB24(bmpFilename, nScreenX, nScreenY, colorBuf);
     }
 
