@@ -202,10 +202,21 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         return FALSE;
     
     // Get the screen size
-    nScreenX = 800;
-    nScreenY = 600;
-    nPosX = 100;
-    nPosY = 100;
+    //nScreenX = 800;
+    //nScreenY = 600;
+    nPosX = 0;
+    nPosY = 0;
+
+    // Get he Window handle and Device context to the desktop
+    hDesktopWnd = GetDesktopWindow();
+    hDesktopDC = GetDC(hDesktopWnd);
+
+    // Get the screen size
+    nScreenX = GetDeviceCaps(hDesktopDC, HORZRES);
+    nScreenY = GetDeviceCaps(hDesktopDC, VERTRES);
+
+    // Release the desktop device context
+    ReleaseDC(hDesktopWnd, hDesktopDC);
 
     // Create Menu
     hMenu = CreateMenu();
@@ -217,7 +228,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     hWnd = CreateWindow(lpszAppName, lpszAppName,
 
         // OpenGL requires WS_CLIPCHILDREN and WS_CLIPSIBLINGS
-        WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+        WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
 
         // Window position and size
         nPosX, nPosY,
