@@ -11,17 +11,20 @@
 #define IDM_CHANGE_POSITION 40002
 #define IDM_CHANGE_DIRECTION 40003
 
-// Initial square position and size
-GLfloat x11 = 100.0f;
-GLfloat y11 = 150.0f;
-GLsizei rsize = 50;
+// Initial position and size
 GLsizei facesize = 50;
 GLsizei eyesize = 10;
+GLfloat mouthMin = 1.7f * PI;
+GLfloat mouthMax = 1.9f * PI;
+GLfloat mouthStart = mouthMin;
+GLfloat mouthDest = mouthMax;
 
-// Step size in x and y directions
-// (number of pixels to move each time)
-GLfloat xstep = 1.0f;
-GLfloat ystep = 1.0f;
+// Step size
+GLfloat step = 0.01f;
+
+// Some menu-controled variables
+GLboolean eyeChange = false;
+GLfloat colorOverlay = 1.0f;
 
 // Keep track of windows changing width and height
 GLfloat windowWidth;
@@ -67,44 +70,35 @@ void ChangeSize(GLsizei w, GLsizei h)
 // Called by timer routine to effect movement.
 void IdleFunction(void)
 {
-    // Reverse direction when you reach left or right edge
-    if (x11 > windowWidth - rsize || x11 < 0)
-        xstep = -xstep;
+    if (mouthDest - mouthStart < step && step > 0)
+        step = -step;
+    if (mouthStart - mouthMin < -step && step < 0)
+        step = -step;
 
-    // Reverse direction when you reach top or bottom edge
-    if (y11 > windowHeight - rsize || y11 < 0)
-        ystep = -ystep;
-
-
-    // Check bounds. This is incase the window is made smaller and the rectangle is outside the new clipping volume
-    if (x11 > windowWidth - rsize)
-        x11 = windowWidth - rsize - 1;
-
-    if (y11 > windowHeight - rsize)
-        y11 = windowHeight - rsize - 1;
-
-    // Actually move the square
-    x11 += xstep;
-    y11 += ystep;
+    mouthStart += step;
 }
 
 /*
  * Function that handles the drawing of a circle using the triangle fan
  * method. This will create a filled circle.
  */
-void drawFilledCircle(GLfloat x, GLfloat y, GLfloat radius) {
+void drawFilledCircle(GLfloat x, GLfloat y, GLfloat radius, 
+                      GLfloat start = 0.0f, GLfloat dest = 2.0f * PI, GLfloat x0 = -1.0f, GLfloat y0 = -1.0f) 
+{
     int i;
     int triangleAmount = 50; //# of triangles used to draw circle
 
-                             //GLfloat radius = 0.8f; //radius
-    GLfloat twicePi = 2.0f * PI;
+    if (x0 < 0.0f && y0 < 0.0f) {
+        x0 = x;
+        y0 = y;
+    }
 
     glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(x, y); // center of circle
+        glVertex2f(x0, y0); // center of circle
         for (i = 0; i <= triangleAmount; i++) {
             glVertex2f(
-                x + (radius * cos(i * twicePi / triangleAmount)),
-                y + (radius * sin(i * twicePi / triangleAmount))
+                x + (radius * cos(start + i * (dest - start) / triangleAmount)),
+                y + (radius * sin(start + i * (dest - start) / triangleAmount))
             );
         }
     glEnd();
@@ -115,19 +109,33 @@ void RenderScene(void)
 {
     // Set background clearing color to sky blue.
     glClearColor(0.2f, 0.8f, 1.0f, 1.0f);
+    if (colorOverlay < 0.9f)
+        glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
 
     // Clear the window with current clearing color
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Draw a grassland.
-    glColor3ub(34, 139, 34);
+    glColor3ub(34 * colorOverlay, 139 * colorOverlay, 34 * colorOverlay);
     glRecti(0, 0, windowWidth + 2, 0.6 * windowHeight);
 
     // Draw a face.
-    glColor3ub(252, 224, 203);
+    glColor3ub(252 * colorOverlay, 224 * colorOverlay, 203 * colorOverlay);
     drawFilledCircle(windowWidth / 2, windowHeight / 2, facesize);
     glColor3f(0.0f, 0.0f, 0.0f);
     drawFilledCircle(windowWidth / 2 + 0.5 * facesize, windowHeight / 2 + 0.3 * facesize, eyesize);
+
+    // If eyeChange, draw a different eye.
+    if (eyeChange)
+    {
+        glColor3ub(252 * colorOverlay, 224 * colorOverlay, 203 * colorOverlay);
+        drawFilledCircle(windowWidth / 2 + 0.5 * facesize, windowHeight / 2 + 0.1 * facesize, 1.2 * eyesize);
+    }
+
+    // Draw the mouse
+    glColor3ub(255 * colorOverlay, 69 * colorOverlay, 0);
+    drawFilledCircle(windowWidth / 2, windowHeight / 2, facesize, 
+                     mouthStart, mouthDest, windowWidth / 2 + 0.3 * facesize, windowHeight / 2 - 0.3 * facesize);
 }
 
 
@@ -202,8 +210,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // Create Menu
     hMenu = CreateMenu();
     AppendMenu(hMenu, MF_STRING, IDM_CHANGE_COLOR, "Change &Color");
-    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_POSITION, "Change &Position");
-    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_DIRECTION, "Change &Direction");
+    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_POSITION, "Change &Eye");
+    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_DIRECTION, "Change &Speed");
 
     // Create the main application window
     hWnd = CreateWindow(lpszAppName, lpszAppName,
@@ -323,8 +331,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
         switch (LOWORD(wParam))
         {
         case IDM_CHANGE_COLOR:
+            if (colorOverlay < 0.8f)
+                colorOverlay = 1.0f;
+            else
+                colorOverlay = 0.5f;
+            break;
         case IDM_CHANGE_POSITION:
+            eyeChange = !eyeChange;
+            break;
         case IDM_CHANGE_DIRECTION:
+            if (fabs(step) < 0.015f)
+                step *= 2;
+            else
+                step /= 2;
             break;
         }
         break;
