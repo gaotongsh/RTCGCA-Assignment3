@@ -184,7 +184,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HWND		hWnd;			    // Storeage for window handle
     HWND		hDesktopWnd;		// Storeage for desktop window handle
     HDC			hDesktopDC; 		// Storeage for desktop window device context
-    HMENU       hMenu;              // Windows Menu
     int			nScreenX, nScreenY;	// Screen Dimensions
     int			nPosX, nPosY;	    // Initial Screen Position
 
@@ -200,7 +199,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // No need for background brush for OpenGL window
     wc.hbrBackground = NULL;
 
-    wc.lpszMenuName = lpszAppName;
+    wc.lpszMenuName = NULL;
     wc.lpszClassName = lpszAppName;
 
     // Register the window class
@@ -224,13 +223,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // Release the desktop device context
     ReleaseDC(hDesktopWnd, hDesktopDC);
 
-    // Create Menu
-    hMenu = CreateMenu();
-    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_COLOR, "Change &Color");
-    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_POSITION, "Change &Eye");
-    AppendMenu(hMenu, MF_STRING, IDM_CHANGE_DIRECTION, "Change &Speed");
-    AppendMenu(hMenu, MF_STRING, IDM_SAVE, "Save &Pics...");
-
     // Create the main application window
     hWnd = CreateWindow(lpszAppName, lpszAppName,
 
@@ -241,8 +233,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         nPosX, nPosY,
         nScreenX, nScreenY,
 
-        NULL,
-        hMenu,
+        NULL, NULL,
         hInstance,
         NULL);
 
@@ -286,11 +277,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
 {
     static HGLRC hRC;		// Permenant Rendering context
     static HDC hDC;			// Private GDI Device context
+    static HMENU hMenu, hMenuPopup;     // Windows Menu
 
     switch (message)
     {
     // Window creation, setup for OpenGL
     case WM_CREATE:
+        // Create Menu
+        hMenu = CreateMenu();
+        hMenuPopup = CreateMenu();
+        AppendMenu(hMenuPopup, MF_STRING, IDM_CHANGE_COLOR, "Change &Color");
+        AppendMenu(hMenuPopup, MF_STRING, IDM_CHANGE_POSITION, "Change &Eye");
+        AppendMenu(hMenuPopup, MF_STRING, IDM_CHANGE_DIRECTION, "Change &Speed");
+        AppendMenu(hMenuPopup, MF_STRING, IDM_SAVE, "Save &Pics...");
+        AppendMenu(hMenu, MF_POPUP, (LONG)hMenuPopup, "MyMenu");
+
         // Store the device context
         hDC = GetDC(hWnd);
 
@@ -303,6 +304,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
 
         // Create a timer that fires 30 times a second
         SetTimer(hWnd, 33, 1, NULL);
+        break;
+
+    // Toggle Menu
+    case WM_RBUTTONUP:
+        TrackPopupMenu(hMenuPopup, TPM_RIGHTBUTTON, LOWORD(lParam), HIWORD(lParam), 0, hWnd, NULL);
         break;
 
     // Window is being destroyed, cleanup
