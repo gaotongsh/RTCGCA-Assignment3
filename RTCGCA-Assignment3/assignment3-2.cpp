@@ -26,7 +26,7 @@ GLfloat mouthStart = mouthMin;
 GLfloat mouthDest = mouthMax;
 
 // Step size
-GLfloat step = 0.01f;
+GLfloat step = 0.04f;
 
 // Some menu-controled variables
 bool eyeChange = false;
@@ -35,6 +35,13 @@ GLfloat colorOverlay = 1.0f;
 // Keep track of windows changing width and height
 GLfloat windowWidth;
 GLfloat windowHeight;
+int nScreenX, nScreenY;	// Screen Dimensions
+int nPosX, nPosY;	    // Initial Screen Position
+
+static int frameNum = 0;
+unsigned char colorBuf[2560 * 1600 * 3];
+char numStr[5];
+char bmpFilename[50];
 
 static LPCTSTR lpszAppName = "Assignment 3-2 - Gao Tong";
 
@@ -72,10 +79,101 @@ void ChangeSize(GLsizei w, GLsizei h)
     gluOrtho2D(0.0f, windowWidth, 0.0f, windowHeight);
 }
 
+boolean SaveDIB24(const char* lpszFileName, DWORD dwWidth, DWORD dwHeight, void* lpvBits)
+{
+    HANDLE hFile = NULL;
+
+    BOOL bOK;
+    DWORD dwNumWritten;
+    DWORD dwWidthAlign;
+    BITMAPFILEHEADER bmfh;
+    BITMAPINFOHEADER bmih;
+
+    __try {
+
+        hFile = CreateFile(
+            lpszFileName,
+            GENERIC_WRITE,
+            0,
+            NULL,
+            CREATE_ALWAYS,
+            0,
+            NULL
+        );
+        if (hFile == INVALID_HANDLE_VALUE) return 0;
+
+        dwWidthAlign = ((dwWidth * sizeof(RGBTRIPLE) + 3) / 4) * 4;
+
+        // BITMAPFILEHEADDER
+        bmfh.bfReserved1 = bmfh.bfReserved2 = 0;
+        bmfh.bfType = ('B' | 'M' << 8);
+        bmfh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+        bmfh.bfSize = bmfh.bfOffBits + dwWidthAlign*dwHeight;
+
+        bOK = WriteFile(
+            hFile,
+            &bmfh,
+            sizeof(bmfh),
+            &dwNumWritten,
+            NULL
+        );
+        if (!bOK) return 0;
+
+
+        bmih.biSize = sizeof(BITMAPINFOHEADER);
+        bmih.biWidth = dwWidth;
+        bmih.biHeight = dwHeight;
+        bmih.biPlanes = 1;
+        bmih.biBitCount = 24;
+        bmih.biCompression = 0;
+        bmih.biSizeImage = 0;
+        bmih.biXPelsPerMeter = 0;
+        bmih.biYPelsPerMeter = 0;
+        bmih.biClrUsed = 0;
+        bmih.biClrImportant = 0;
+
+        bOK = WriteFile(
+            hFile,
+            &bmih,
+            sizeof(bmih),
+            &dwNumWritten,
+            NULL
+        );
+        if (!bOK) return 0;
+
+        bOK = WriteFile(
+            hFile,
+            lpvBits,
+            dwWidthAlign*dwHeight,
+            &dwNumWritten,
+            NULL
+        );
+        if (!bOK) return 0;
+
+    }
+    __finally {
+
+        CloseHandle(hFile);
+
+    }
+
+    return 1;
+}
 
 // Called by timer routine to effect movement.
 void IdleFunction(void)
 {
+    if (savePic) {
+        //¶ÁÈ¡Ö¡»º´æ
+        frameNum++;
+        glReadPixels(0, 0, nScreenX, nScreenY, GL_BGR_EXT, GL_UNSIGNED_BYTE, colorBuf);
+
+        sprintf_s(numStr, 100, "%03d", frameNum);
+        numStr[4] = '\0';
+        sprintf_s(bmpFilename, 100, "%s%s%s.bmp", szBuffer, "frame", numStr);
+        SaveDIB24(bmpFilename, nScreenX, nScreenY, colorBuf);
+    }
+
     if (mouthDest - mouthStart < step && step > 0)
         step = -step;
     if (mouthStart - mouthMin < -step && step < 0)
@@ -184,10 +282,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HWND		hWnd;			    // Storeage for window handle
     HWND		hDesktopWnd;		// Storeage for desktop window handle
     HDC			hDesktopDC; 		// Storeage for desktop window device context
-    int			nScreenX, nScreenY;	// Screen Dimensions
-    int			nPosX, nPosY;	    // Initial Screen Position
 
-                                    // Register Window style
+    // Register Window style
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wc.lpfnWndProc = (WNDPROC)WndProc;
     wc.cbClsExtra = 0;
@@ -303,7 +399,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
         wglMakeCurrent(hDC, hRC);
 
         // Create a timer that fires 30 times a second
-        SetTimer(hWnd, 33, 1, NULL);
+        SetTimer(hWnd, 1, 40, NULL);
         break;
 
     // Toggle Menu
@@ -377,7 +473,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
             eyeChange = !eyeChange;
             break;
         case IDM_CHANGE_DIRECTION:
-            if (fabs(step) < 0.015f)
+            if (fabs(step) < 0.03f)
                 step *= 2;
             else
                 step /= 2;
