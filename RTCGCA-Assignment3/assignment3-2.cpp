@@ -1,15 +1,21 @@
 // assignment1.cpp
-// This program shows ...
+// This program shows how the assignment is done.
+#include <stdio.h>
+#include <math.h>
 #include <windows.h>
 #include <gl\gl.h>
 #include <gl\glu.h>
-#include <math.h>
+#include <Shlobj.h>
 
 #define PI 3.1415926
 
 #define IDM_CHANGE_COLOR 40001
 #define IDM_CHANGE_POSITION 40002
 #define IDM_CHANGE_DIRECTION 40003
+#define IDM_SAVE 40004
+
+TCHAR szBuffer[MAX_PATH] = {0};
+bool savePic = false;
 
 // Initial position and size
 GLsizei facesize = 50;
@@ -23,14 +29,14 @@ GLfloat mouthDest = mouthMax;
 GLfloat step = 0.01f;
 
 // Some menu-controled variables
-GLboolean eyeChange = false;
+bool eyeChange = false;
 GLfloat colorOverlay = 1.0f;
 
 // Keep track of windows changing width and height
 GLfloat windowWidth;
 GLfloat windowHeight;
 
-static LPCTSTR lpszAppName = "Assignment - Gao Tong";
+static LPCTSTR lpszAppName = "Assignment 3-2 - Gao Tong";
 
 // Declaration for Window procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -223,6 +229,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     AppendMenu(hMenu, MF_STRING, IDM_CHANGE_COLOR, "Change &Color");
     AppendMenu(hMenu, MF_STRING, IDM_CHANGE_POSITION, "Change &Eye");
     AppendMenu(hMenu, MF_STRING, IDM_CHANGE_DIRECTION, "Change &Speed");
+    AppendMenu(hMenu, MF_STRING, IDM_SAVE, "Save &Pics...");
 
     // Create the main application window
     hWnd = CreateWindow(lpszAppName, lpszAppName,
@@ -259,7 +266,20 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     return msg.wParam;
 }
 
-
+void getSavingPath() {
+    BROWSEINFO bi;
+    ZeroMemory(&bi, sizeof(BROWSEINFO));
+    bi.hwndOwner = NULL;
+    bi.pszDisplayName = szBuffer;
+    bi.lpszTitle = TEXT ("Choose a path for saving screenshots:");
+    bi.ulFlags = BIF_RETURNFSANCESTORS;
+    LPITEMIDLIST idl = SHBrowseForFolder(&bi);
+    if (NULL == idl)
+    {
+        return;
+    }
+    SHGetPathFromIDList(idl, szBuffer);
+}
 
 // Window procedure, handles all messages for this program
 LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
@@ -355,6 +375,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT	message, WPARAM	wParam, LPARAM lParam)
                 step *= 2;
             else
                 step /= 2;
+            break;
+        case IDM_SAVE:
+            getSavingPath();
+            savePic = true;
             break;
         }
         break;
