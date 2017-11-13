@@ -15,9 +15,9 @@
 
 #define PI 3.1415926
 
-#define IDM_CHANGE_COLOR 40001
-#define IDM_CHANGE_POSITION 40002
-#define IDM_CHANGE_DIRECTION 40003
+#define CHANGE_COLOR 40001
+#define CHANGE_POSITION 40002
+#define CHANGE_DIRECTION 40003
 
 // Initial position and size
 GLsizei facesize = 50;
@@ -143,6 +143,38 @@ void keyboard(unsigned char key, int x, int y)
     }
 }
 
+void menuEvents(int option)
+{
+    switch (option)
+    {
+    case CHANGE_COLOR:
+        if (colorOverlay < 0.8f)
+            colorOverlay = 1.0f;
+        else
+            colorOverlay = 0.5f;
+        break;
+    case CHANGE_POSITION:
+        eyeChange = !eyeChange;
+        break;
+    case CHANGE_DIRECTION:
+        if (fabs(step) < 0.0006f)
+            step *= 2;
+        else
+            step /= 2;
+        break;
+    }
+}
+
+void initMenu()
+{
+    int menu;
+    menu = glutCreateMenu(menuEvents);
+    glutAddMenuEntry("Change Color", CHANGE_COLOR);
+    glutAddMenuEntry("Change Eye", CHANGE_POSITION);
+    glutAddMenuEntry("Change Speed", CHANGE_DIRECTION);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -160,6 +192,8 @@ int main(int argc, char** argv)
 	printf("渲染器标识符：%s\n", biaoshifu);
 	printf("OpenGL实现的版本号：%s\n", OpenGLVersion);
 	printf("GLU工具库版本：%s\n", gluVersion);
+
+    initMenu();
 
 	glutDisplayFunc(display);
     glutReshapeFunc(reshape);
