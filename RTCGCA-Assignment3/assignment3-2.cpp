@@ -168,7 +168,7 @@ void IdleFunction(void)
         frameNum++;
         glReadPixels(0, 0, nScreenX, nScreenY, GL_BGR_EXT, GL_UNSIGNED_BYTE, colorBuf);
 
-        sprintf_s(numStr, 100, "%03d", frameNum);
+        sprintf_s(numStr, 10, "%04d", frameNum);
         numStr[4] = '\0';
         sprintf_s(bmpFilename, 100, "%s%s%s.bmp", szBuffer, "frame", numStr);
         SaveDIB24(bmpFilename, nScreenX, nScreenY, colorBuf);
